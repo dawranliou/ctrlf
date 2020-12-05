@@ -134,7 +134,10 @@ search already."
     ([remap isearch-backward-regexp]         . ctrlf-backward-alternate)
     ([remap isearch-forward-symbol]          . ctrlf-forward-symbol)
     ([remap isearch-forward-symbol-at-point] . ctrlf-forward-symbol-at-point))
-  "Keybindings enabled in `ctrlf-mode'. This is not a keymap.
+  "This variable is deprecated. To customize the keybindings, modify
+`ctrlf-mode-map' directly.
+
+Keybindings enabled in `ctrlf-mode'. This is not a keymap.
 Rather it is an alist that is converted into a keymap just before
 `ctrlf-mode' is (re-)enabled. The keys are strings or raw key
 events and the values are command symbols.
@@ -149,6 +152,7 @@ active in the minibuffer during a search."
          (set var val)
          (when (bound-and-true-p ctrlf-mode)
            (ctrlf-mode +1))))
+(make-obsolete-variable 'ctrlf-mode-bindings 'ctrlf-mode-map)
 
 (defcustom ctrlf-minibuffer-bindings
   '(([remap abort-recursive-edit]           . ctrlf-cancel)
@@ -1383,26 +1387,29 @@ search, change back to fuzzy-regexp search."
 ;;;; Minor mode
 
 ;;;###autoload
-(defvar ctrlf--keymap (make-sparse-keymap)
-  "Keymap for `ctrlf-mode'. Populated when mode is enabled.
-See `ctrlf-mode-bindings'.")
+(defvar ctrlf-mode-map
+  (let ((map (make-sparse-keymap)))
+    (dolist (binding ctrlf-mode-bindings)
+      (define-key map (car binding) (cdr binding)))
+    map)
+  "Keymap for `ctrlf-mode'.")
 
 ;;;###autoload
 (progn
   (define-minor-mode ctrlf-local-mode
     "Minor mode to use CTRLF in place of Isearch.
 See `ctrlf-mode-bindings' to customize."
-    :keymap ctrlf--keymap
+    :keymap ctrlf-mode-map
     (require 'map)
-    (when ctrlf-local-mode
-      ;; Hack to clear out keymap. Presumably there's a `clear-keymap'
-      ;; function lying around somewhere...?
-      (setcdr ctrlf--keymap nil)
+    (when (and ctrlf-local-mode
+               (not (equal ctrlf-mode-bindings
+                           (get 'ctrlf-mode-bindings 'standard-value))))
+      (setcdr ctrlf-mode-map nil)
       (map-apply
        (lambda (key cmd)
          (when (stringp key)
            (setq key (kbd key)))
-         (define-key ctrlf--keymap key cmd))
+         (define-key ctrlf-mode-map key cmd))
        ctrlf-mode-bindings))
     (with-eval-after-load 'ctrlf
       ;; TODO: This appears to have a bug where if CTRLF is enabled
