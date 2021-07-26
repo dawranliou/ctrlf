@@ -938,7 +938,8 @@ Use optional INITIAL-CONTENTS as initial contents and POSITION as
 current starting point."
   (ctrlf--evil-set-jump)
   (let ((keymap))
-    (if (equal ctrlf-minibuffer-bindings (get 'ctrlf-minibuffer-bindings 'standard-value))
+    (if (equal ctrlf-minibuffer-bindings
+               (get 'ctrlf-minibuffer-bindings 'standard-value))
         (setq keymap ctrlf-minibuffer-mode-map)
       (setq keymap (make-sparse-keymap))
       (set-keymap-parent keymap minibuffer-local-map)
